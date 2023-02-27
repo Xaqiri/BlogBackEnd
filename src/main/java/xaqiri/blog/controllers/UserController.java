@@ -1,29 +1,50 @@
 package xaqiri.blog.controllers;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.springframework.web.bind.annotation.RequestParam;
+import java.util.HashMap;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import java.util.ArrayList;
+
+import xaqiri.blog.UserRepository;
+import xaqiri.blog.models.User;
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class UserController {
+    /*
+     * Routes:
+     * GET /user: return all users
+     * GET /user/name: return a single user
+     * GET /user/posts: return all of a user's posts
+     * POST /user/new: create a new user
+     * PUT /user/name: edit a user
+     * DELETE /user/name: delete a user
+     */
 
-    private final ArrayList<String> names = new ArrayList<String>();
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping("/user")
-    public @ResponseBody ArrayList<String> user() {
-        return names;
+    public @ResponseBody Iterable<User> getUsers() {
+        return userRepository.findAll();
     }
 
-    @PostMapping("/user")
-    public @ResponseBody ArrayList<String> createUser(@RequestParam String name, @RequestParam String password) {
-        this.names.add(name);
-        return names;
+    @GetMapping("/user/{name}")
+    public @ResponseBody User signIn(@PathVariable String name) {
+        User u = userRepository.findByUsername(name);
+        return u;
     }
+
+    @PostMapping("/user/add")
+    public @ResponseBody String createUser(@RequestBody HashMap<String, String> user) {
+        User n = new User();
+        n.setName(user.get("username"));
+        n.setPassword(user.get("password"));
+        userRepository.save(n);
+        System.out.println(n);
+        return "User created";
+    }
+
 }
