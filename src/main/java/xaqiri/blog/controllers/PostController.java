@@ -1,14 +1,13 @@
 package xaqiri.blog.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import xaqiri.blog.PostRepository;
 import xaqiri.blog.UserRepository;
 import xaqiri.blog.models.Post;
 import xaqiri.blog.models.User;
-import java.util.HashMap;
 
+// TODO: Add exception handling
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class PostController {
@@ -22,25 +21,27 @@ public class PostController {
      * DELETE /post/delete/id: delete a single post
      */
 
-    @Autowired
-    private PostRepository postRepository;
-    @Autowired
-    private UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
-    @GetMapping("/post")
+    public PostController(PostRepository postRepository, UserRepository userRepository) {
+        this.postRepository = postRepository;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/posts")
     public @ResponseBody Iterable<Post> getPosts() {
         return postRepository.findAll();
     }
 
-    @GetMapping("/post/{id}")
+    @GetMapping("/posts/{id}")
     public @ResponseBody Optional<Post> getSinglePost(@PathVariable Integer id) {
-        Post p = new Post();
         Optional<Post> post = postRepository.findById(id);
         return post;
     }
 
-    @PostMapping("/post/new")
-    public @ResponseBody String newPost(@RequestBody HashMap<String, String> post) {
+    @PostMapping("/posts")
+    public @ResponseBody Post newPost(@RequestBody Post post) {
         /*
          * post = {
          * postId: Integer,
@@ -50,32 +51,36 @@ public class PostController {
          * }
          */
         Post p = new Post();
-        p.setPostBody(post.get("postBody"));
-        p.setPostTitle(post.get("postTitle"));
-        Optional<User> user = userRepository.findById(Integer.parseInt(post.get("userId")));
-        if (user != null) {
+        p.setPostBody(post.getPostBody());
+        p.setPostTitle(post.getPostTitle());
+        Optional<User> user = userRepository.findById(post.getUserId());
+        if (user.isPresent()) {
             p.setUserId(user.get().getId());
             postRepository.save(p);
-            return "Post created";
-        } else {
-            return "Post could not be created";
         }
+        return p;
     }
 
-    @PutMapping("/post/edit/{id}")
-    public @ResponseBody String editPost(@RequestBody HashMap<String, String> post, @PathVariable Integer id) {
-        if (postRepository.existsById(id)) {
-            Post p = postRepository.findById(id).get();
-            if (post.containsKey("postTitle")) {
-                p.setPostTitle(post.get("postTitle"));
-            }
-            if (post.containsKey("postBody")) {
-                p.setPostBody(post.get("postBody"));
-            }
+    @PutMapping("/posts")
+    public @ResponseBody Post editPost(@RequestBody Post post) {
+        Optional<Post> maybePost = postRepository.findById(post.getId());
+        if (maybePost.isPresent()) {
+            Post p = maybePost.get();
+            p.setPostBody(post.getPostBody());
+            p.setPostTitle(post.getPostTitle());
+            p.setUserId(post.getUserId());
             postRepository.save(p);
-            return "Post edited";
+            return p;
         }
-        return "Post not found";
+        return new Post();
+    }
+
+    @DeleteMapping("/posts/{id}")
+    public void deletePost(@PathVariable Integer id) {
+        Optional<Post> p = postRepository.findById(id);
+        if (p.isPresent()) {
+            postRepository.delete(p.get());
+        }
     }
 
 }
