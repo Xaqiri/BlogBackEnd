@@ -8,8 +8,8 @@ import xaqiri.blog.UserRepository;
 import xaqiri.blog.models.User;
 
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
+// TODO: Add error handling
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class UserController {
@@ -23,28 +23,49 @@ public class UserController {
      * DELETE /user/name: delete a user
      */
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @GetMapping("/user")
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/users")
     public @ResponseBody Iterable<User> getUsers() {
         return userRepository.findAll();
     }
 
-    @GetMapping("/user/{name}")
+    @GetMapping("/users/{name}")
     public @ResponseBody User signIn(@PathVariable String name) {
         User u = userRepository.findByUsername(name);
         return u;
     }
 
-    @PostMapping("/user/add")
-    public @ResponseBody String createUser(@RequestBody HashMap<String, String> user) {
+    @PostMapping("/users/add")
+    public @ResponseBody User createUser(@RequestBody User user) {
         User n = new User();
-        n.setName(user.get("username"));
-        n.setPassword(user.get("password"));
+        n.setName(user.getName());
+        n.setPassword(user.getPassword());
         userRepository.save(n);
-        System.out.println(n);
-        return "User created";
+        return n;
+    }
+
+    @PutMapping("/users")
+    public @ResponseBody User updateUser(@RequestBody User user) {
+        User n = userRepository.findByUsername(user.getName());
+        if (n != null) {
+            n.setName(user.getName());
+            n.setPassword(user.getPassword());
+            userRepository.save(n);
+        }
+        return n;
+    }
+
+    @DeleteMapping("/users/{name}")
+    public void deleteUser(@PathVariable String name) {
+        User n = userRepository.findByUsername(name);
+        if (n != null) {
+            userRepository.deleteById(n.getId());
+        }
     }
 
 }
