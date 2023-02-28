@@ -36,8 +36,7 @@ public class PostController {
 
     @GetMapping("/posts/{id}")
     public @ResponseBody Optional<Post> getSinglePost(@PathVariable Integer id) {
-        Optional<Post> post = postRepository.findById(id);
-        return post;
+        return postRepository.findById(id);
     }
 
     @PostMapping("/posts")
@@ -78,9 +77,7 @@ public class PostController {
     @DeleteMapping("/posts/{id}")
     public void deletePost(@PathVariable Integer id) {
         Optional<Post> p = postRepository.findById(id);
-        if (p.isPresent()) {
-            postRepository.delete(p.get());
-        }
+        p.ifPresent(postRepository::delete);
     }
 
 }
